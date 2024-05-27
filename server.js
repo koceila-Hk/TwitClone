@@ -41,14 +41,20 @@ app.post('/register', async (req, res) => {
 
 app.post('/login', async(req, res) => {
     try {
-        const data = req.body;
-        console.log(data);
+        const email = req.body.email;
+        const password = req.body.password;
+        console.log(email);
+        console.log(password);
+
         const collection = db.collection('users');
-        const result = await collection.find(data).toArray();
-        if (result.length !== 0) {
-            res.status(200).send('user found');
+        const user = await collection.findOne({email: email});
+        console.log(user);
+        if (user && user.password === password) {
+            res.status(200).json('user found');
+            console.log('good');
         } else {
-            res.status(500).send('user not found');
+            res.status(500).json('user not found');
+            console.log('bad');
         }
         // console.log(result);
     } catch(error) {

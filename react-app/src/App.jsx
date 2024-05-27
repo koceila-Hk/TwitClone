@@ -152,6 +152,7 @@ const Login = ({ onSwitchToSignUp }) => {
       });
       const data = await response.json();
       console.log(data);
+      
     } catch(error) {
       console.error('Error', error);
     }
@@ -175,9 +176,7 @@ const Login = ({ onSwitchToSignUp }) => {
             <input 
               value={password} 
               type="password" 
-              onChange={(e) => setPassword
-                (e.target.value.staus )}
-
+              onChange={(e) => setPassword(e.target.value)} 
               placeholder="Password" 
             />
           </div>
