@@ -1,16 +1,23 @@
-/* Global styles */
+* {
+  list-style: none;
+  text-decoration: none;
+  margin: 0;
+
+}
+
 body {
   font-family: 'Arial', sans-serif;
   background-color: #f0f2f5;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
   height: 100vh;
 }
 
 .App {
+  display: flex;
+  justify-content: center;
+  padding-top: 10%;
+}
+
+.form {
   background-color: #ffffff;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   border-radius: 8px;
@@ -87,3 +94,47 @@ fieldset {
 sup {
   color: #d9534f;
 }
+
+/*/////// HEADER /////////*/
+
+#root {
+  height: 100vh;
+}
+
+nav {
+  background-color: #555;
+  padding: 15px;
+}
+
+ul {
+  display: flex;
+  justify-content: end;
+}
+
+li {
+  margin-left: 10%;
+}
+
+a {
+  color: #f0f2f5;
+  cursor: pointer;
+}
+
+.Home {
+  padding-top: 30px;
+  height: 100vh;
+}
+
+footer {
+  background-color: #333;
+  padding: 30px;
+  display: flex;
+  align-items: end;
+  justify-content: center;
+}
+
+p {
+  color: #ccc;
+  font-size: 1.2rem;
+}
+

@@ -34,8 +34,10 @@ app.post('/register', async (req, res) => {
     const result = await collection.insertMany([data]);
     console.log(result);
 
+    res.status(200).json('Utilisateur ajouté avec succes !');
   } catch (error) {
     console.error('Erreur lors de l\'insertion du document:', error);
+    res.status(500).json('Erreur server')
   }
 });
 
@@ -48,7 +50,7 @@ app.post('/login', async(req, res) => {
 
         const collection = db.collection('users');
         const user = await collection.findOne({email: email});
-        console.log(user);
+
         if (user && user.password === password) {
             res.status(200).json('user found');
             console.log('good');
@@ -56,11 +58,11 @@ app.post('/login', async(req, res) => {
             res.status(500).json('user not found');
             console.log('bad');
         }
-        // console.log(result);
     } catch(error) {
         console.error('Erreur', error);
     }
 })
+
 
 connectToDatabase().then(() => {
 app.listen(port, () => {
