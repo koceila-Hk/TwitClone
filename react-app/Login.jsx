@@ -27,10 +27,10 @@ const Login = () => {
         const data = await response.json();
   
         if (response.status === 200){
-          navigate('/');
+          localStorage.setItem('token', data.token)
+          navigate('/home');
         } else {
           setError(true);
-          console.log(data);
         }
   
       } catch(error) {

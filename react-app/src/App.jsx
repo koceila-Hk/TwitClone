@@ -16,12 +16,14 @@ const App = () => {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Layout />}>
-          <Route index element={<Home />} />
+          {/* <Route index element={<Home />} /> */}
+          <Route path="/home" element={<Home />} />
           <Route path="blogs" element={<Blogs />} />
           <Route path="*" element={<NoPage />} />
         </Route>
-        <Route path="/login" element={<Login onSwitchToSignUp={() => setIsLoginPage(false)} />} />
-        <Route path="/signup" element={<SignUp onSwitchToLogin={() => setIsLoginPage(true)} />} />
+        <Route path="/login" element={<Login/>} />
+        <Route path="/signup" element={<SignUp/>} />
+        <Route index element={<SignUp/>} />
       </Routes>
     </BrowserRouter>
   );

@@ -17,6 +17,7 @@ const SignUp = () => {
     const [lastName, setLastName] = useState(""); 
     const [email, setEmail] = useState(""); 
     const [password, setPassword] = useState(""); 
+    const [errorMessage, setEroorMessage] = useState('');
 
     const navigate = useNavigate();
 
@@ -41,10 +42,12 @@ const SignUp = () => {
           headers: {'Content-Type':'application/json'},
           body: JSON.stringify(dataBody),
         });
-        if (response.status === 200) {
-            navigate('/login');
+        const data = await response.json();
+        if (response.status === 400) {
+            setEroorMessage(data);
+        } else if (response.status === 200) {
+          navigate('/login');
         }
-        // const data = await response.json();
       } catch(error) {
         console.error('Error', error);
       }
@@ -96,6 +99,7 @@ const SignUp = () => {
               /> 
               {password.length < 8 ? <PasswordErrorMessage /> : null}
             </div>
+            <p style={{color:'red'}}>{errorMessage}</p>
             <button type="submit" disabled={!getIsFormValid()}> 
               Create account 
             </button>
