@@ -1,6 +1,6 @@
 import express from 'express';
 import cors from 'cors';
-import { MongoClient } from 'mongodb';
+import {connectToDatabase} from './Model/mongoDB.js'
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
@@ -10,23 +10,6 @@ const port = 3000;
 
 app.use(express.json());
 app.use(cors());
-
-const url = 'mongodb+srv://koceilaHk:Mongodb123456$@cluster5.7ouay3s.mongodb.net/';
-const dbName = 'ElonMusk';
-let db;
-
-/////// Fonction pour établir la connexion à MongoDB
-async function connectToDatabase() {
-  const client = new MongoClient(url);
-  try {
-    await client.connect();
-    console.log('Connecté à MongoDB');
-    db = client.db(dbName);
-  } catch (error) {
-    console.error('Erreur de connexion à MongoDB:', error);
-  }
-}
-
 
 
 function verifyToken(req, res, next) {
@@ -56,6 +39,7 @@ app.post('/register', async (req, res) => {
       password: hachedPassword
    };
 
+    let db = await connectToDatabase();
     const collection = db.collection('users');
     const emailExist = await collection.findOne({ email: email});
     if (emailExist) {
@@ -75,7 +59,7 @@ app.post('/register', async (req, res) => {
 app.post('/login', async (req, res) => {
     try {
         const {email, password} = req.body;
-
+        let db = await connectToDatabase();
         const collection = db.collection('users');
         const user = await collection.findOne({email: email});
         console.log(user);
@@ -92,7 +76,7 @@ app.post('/login', async (req, res) => {
         const token = jwt.sign({ userId: user._id }, 'your-secret-key', {
         expiresIn: '1h',
         });
-        console.log('Generated Token:', token);
+        // console.log('Generated Token:', token);
         res.status(200).json({ token });
     } catch(error) {
         console.error('Erreur', error);
@@ -103,6 +87,7 @@ app.post('/login', async (req, res) => {
 //////// Route Get pour récupérer des données
 app.get('/user',verifyToken, async(req, res) => {
   try {
+    let db = await connectToDatabase();
     const collection = db.collection('users');
     const users = await collection.find().toArray();
     console.log(users);
