@@ -1,17 +1,17 @@
 import express from 'express';
 import cors from 'cors';
-import {connectToDatabase} from './Model/mongoDB.js'
+import {connectToDatabase, ObjectId} from './Model/mongoDB.js'
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
-
 const app = express();
+app.use(express.urlencoded({ extended: true }));
 const port = 3000;
 
 app.use(express.json());
 app.use(cors());
 
-
+//////// Function verifyToken
 function verifyToken(req, res, next) {
   const token = req.header('Authorization')?.split(' ')[1];
     if (!token) return res.status(401).json({ error: 'Access denied' });
@@ -36,7 +36,8 @@ app.post('/register', async (req, res) => {
       firstName,
       lastName,
       email,
-      password: hachedPassword
+      password: hachedPassword,
+      comments: []
    };
 
     let db = await connectToDatabase();
@@ -62,7 +63,6 @@ app.post('/login', async (req, res) => {
         let db = await connectToDatabase();
         const collection = db.collection('users');
         const user = await collection.findOne({email: email});
-        console.log(user);
         if (!user) {
           return res.status(500).json('User not found')
         }
@@ -74,7 +74,7 @@ app.post('/login', async (req, res) => {
         }      
 
         const token = jwt.sign({ userId: user._id }, 'your-secret-key', {
-        expiresIn: '1h',
+        expiresIn: '2h',
         });
         // console.log('Generated Token:', token);
         res.status(200).json({ token });
@@ -97,6 +97,30 @@ app.get('/user',verifyToken, async(req, res) => {
     res.status(500).json('Erreur server')
   }
 })
+
+//////// Route POST pour insérer les données commentaires
+app.post('/comments',verifyToken, async (req, res) => {
+  const {comment} = req.body;
+
+  let db = await connectToDatabase();
+  const userIdObject = new ObjectId(req.userId);
+  const collection = db.collection('users');
+  const user = await collection.findOne({_id: userIdObject});
+  if(!user){
+    console.log('user not found', user);
+  }
+  const addComment = await collection.updateOne(  { _id: userIdObject}, 
+  {
+    $push: 
+      {
+        comments: comment,
+        date: Date()
+      }
+  }, 
+)
+console.log(addComment);
+})
+
 
 
 // var password2 = "Bcrypt@123";

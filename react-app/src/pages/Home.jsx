@@ -1,7 +1,8 @@
+import Card from "../card";
 const Home = () => {
     return(
     <div className="Home">
-      <h1>Home</h1>
+      <Card></Card>
     </div> 
     )
   };

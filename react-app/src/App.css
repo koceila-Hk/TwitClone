@@ -14,7 +14,7 @@ body {
 .App {
   display: flex;
   justify-content: center;
-  padding-top: 10%;
+  padding-top: 5%;
 }
 
 .form {
@@ -125,6 +125,14 @@ a {
   height: 100vh;
 }
 
+/*/////// CARDS //////////*/
+.image {
+  display: flex;
+  justify-content: center;
+}
+
+
+/*//////// FOOTER //////*/
 footer {
   background-color: #333;
   padding: 30px;
@@ -137,4 +145,3 @@ p {
   color: #ccc;
   font-size: 1.2rem;
 }
-
