@@ -15,10 +15,9 @@ const Blogs = () => {
           }
         });
 
-        if (response.status === 401) {
+        if (!response) {
           console.log('Unauthorized');
         }
-
         const data = await response.json();
         setUser(data);
       } catch (error) {
@@ -29,10 +28,7 @@ const Blogs = () => {
 
   return (
     <div className='Home'>
-      <h1>Les articles de </h1>
-      {user.map((u) => (
-        <h3>{u.firstName} {u.lastName}</h3>
-      ))}
+      <h1>Les articles de {user.firstName} {user.lastName}</h1>
     </div>
   );
 };

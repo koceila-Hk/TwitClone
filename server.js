@@ -11,6 +11,7 @@ const port = 3000;
 app.use(express.json());
 app.use(cors());
 
+
 //////// Function verifyToken
 function verifyToken(req, res, next) {
   const token = req.header('Authorization')?.split(' ')[1];
@@ -24,11 +25,11 @@ function verifyToken(req, res, next) {
    }
    };
 
+
 /////// Route POST pour insérer des données
 app.post('/register', async (req, res) => {
   try {
     const { firstName, lastName, email, password} = req.body;
-
 // Generate salt and hash
  const hachedPassword = await bcrypt.hash(password, 10);
 
@@ -57,6 +58,7 @@ app.post('/register', async (req, res) => {
 });
 
 
+//////// Route pour se connecter
 app.post('/login', async (req, res) => {
     try {
         const {email, password} = req.body;
@@ -89,53 +91,74 @@ app.get('/user',verifyToken, async(req, res) => {
   try {
     let db = await connectToDatabase();
     const collection = db.collection('users');
-    const users = await collection.find().toArray();
-    console.log(users);
-    res.status(200).json(users);
+    const userIdObject = new ObjectId(req.userId);
+    const user = await collection.findOne({_id: userIdObject}, {projection: {firstName:1, lastName:1, _id:0}});
+    // console.log(user);
+
+    res.status(200).json(user);
   } catch(error) {
     console.error('Erreur lors de la récupération des users', error);
     res.status(500).json('Erreur server')
   }
-})
+});
+
 
 //////// Route POST pour insérer les données commentaires
 app.post('/comments',verifyToken, async (req, res) => {
   const {comment} = req.body;
-
-  let db = await connectToDatabase();
-  const userIdObject = new ObjectId(req.userId);
-  const collection = db.collection('users');
-  const user = await collection.findOne({_id: userIdObject});
-  if(!user){
-    console.log('user not found', user);
+  try{
+    let db = await connectToDatabase();
+    const collection = db.collection('users');
+    const userIdObject = new ObjectId(req.userId);
+    const user = await collection.findOne({_id: userIdObject});
+    if(!user){
+      return res.status(404).json('user not found');
+    }
+    const addComment = await collection.updateOne({ _id: userIdObject}, {$push:{comments: comment, date: Date()}},)
+   } catch(error) {
+    console.log('Erreur comments', error);
+    res.status(500).json('Erreur server')
   }
-  const addComment = await collection.updateOne(  { _id: userIdObject}, 
-  {
-    $push: 
-      {
-        comments: comment,
-        date: Date()
-      }
-  }, 
-)
-console.log(addComment);
-})
+  
+});
 
 
+/////// Route Get pour récupérer les commentaires
+app.get('/allcomments', async(req, res) => {
+  try {
+    let db = await connectToDatabase();
+    const collection = db.collection('users');
+  
+    const comments = await collection.find({},{projection:{comments:1, _id:0}}).toArray();
+    const allComments = comments.reduce((acc, user) => {
+      return acc.concat(user.comments);
+    },[]);
+    if (!comments){
+      return res.status(404).json('Comment nout found');
+    }
+    res.status(200).json(allComments)
+  } catch(error) {
+    console.log('Erreur lors de la récupération des commentaires');
+    res.status(404).json('Erreur server')
+  }
 
-// var password2 = "Bcrypt@123";
-// var hash = "$2b$08$ihbrrTtUeKlPe3inaQ4Nm..Ylc7BZ.p9PNU80hoSPnTkvNK9MkVLO";
+});
 
-// bcrypt.compare(password2, hash, function(err, result) {
-//   // Password matched
-//   if (result) {
-//     console.log("Password verified");
-//   }
-//   // Password not matched
-//   else {
-//     console.log("Password not verified");
-//   }
-// });
+
+///////// Route Post pour insérer les likes
+app.post('/likes',async(req, res) => {
+  const {like} = req.body;
+  console.log(like);
+  try {
+    let db = await connectToDatabase();
+    const collection = db.collection('users');
+    const addLikes = await collection.insertOne({like});
+    console.log(addLikes);
+  } catch(error) {
+    console.log('Error insert likes', error);
+  }
+});
+
 
 // bcrypt
 //   .genSalt(workFactor)

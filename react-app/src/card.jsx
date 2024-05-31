@@ -1,10 +1,10 @@
-import React, { useState, useRef} from 'react';
+import React, { useState, useRef, useEffect} from 'react';
 import './App.css'
 
  export default function Card() {
     const [img, setImg] = useState("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSEIW9c-rAXxxmLFlXMPtQUR3KNW4AOmQu8XA&s");
-    const [effect, setEffect] = useState(0);
-    const [comment, setComment] = useState(["very good",'bien', 'j\'aime bien']);
+    const [effect, setEffect] = useState([]);
+    const [comment, setComment] = useState([]);
     const inputRef = useRef(null);
     const inputImgRef = useRef(null);
 
@@ -16,42 +16,21 @@ import './App.css'
         }
     }
 
-    // const handleCommentSubmit = async (e) => {
-    //     e.preventDefault();
-    //     const newComment = inputRef.current.value.trim();
-    //     setComment(arrayComment => [...arrayComment, newComment]);
-    //     inputRef.current.value = "";
-    //     try {
-    //         const res = await fetch('http://localhost/comments',{
-    //             method: 'POST',
-    //             headers: {'Content-Type':'application/json'},
-    //             body: JSON.stringify({comment: newComment})
-    //         });
-    //         const data = await res.json();
-    //         console.log(data);
-    //     } catch(error){
-    //         console.log('Erreur', error);
-    //     }
-    // };
-    const handleCommentSubmit = async (e) => {
+    ////////Route pour insérer les commentaires
+    async function handleCommentSubmit(e) {
         e.preventDefault();
         const newComment = inputRef.current.value.trim();
-        if (newComment) {
-            setComment(arrayComment => [...arrayComment, newComment]);
-            inputRef.current.value = "";
-            try {
-                const token = localStorage.getItem('token');
-                const res = await fetch('http://localhost:3000/comments', {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}`,
-                            'Content-Type': 'application/json' },
-                    body: JSON.stringify({ comment: newComment })
-                });
-                const data = await res.json();
-                console.log('Réponse du serveur:', data);
-            } catch (error) {
-                console.log('Erreur:', error);
-            }
+        setComment(arrayComment => [...arrayComment, newComment]);
+        inputRef.current.value = "";
+        try {
+            const token = localStorage.getItem('token')
+            const res = await fetch('http://localhost:3000/comments',{
+                method: 'POST',
+                headers: {'Content-Type':'application/json', 'Authorization':`Bearer ${token}`},
+                body: JSON.stringify({comment: newComment})
+            });
+        } catch(error){
+            console.log('Erreur', error);
         }
     };
 
@@ -62,26 +41,25 @@ import './App.css'
         setImg(newImg)
     }
 
-    // async function submit(e) {
-    //     e.preventDefault();
-    //     let data = {
-    //         img: img,
-    //         effect: effect,
-    //         comment: comment
-    //     };
-    //     try {
-    //         const res = await fetch('http://localhost/news',{
-    //             method: 'POST',
-    //             headers: {'Content-Type':'application/json'},
-    //             body: JSON.stringify(data)
-    //         });
-    //         const data = await res.json();
-    //         console.log('recu', data);
-    //     } catch (error){
-    //         console.log('Erreur', error);
-    //     }
-    // }
-
+    ////////Route pour récupérer les commentaires
+    useEffect(() => {
+        (async() => {
+            try{
+                const token = localStorage.getItem('token')
+                const response = await fetch('http://localhost:3000/allcomments',{
+                    headers:{
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type':'application/json'
+                    }
+                })
+                const data = await response.json();
+                console.log('recu', data);
+                setComment( data)
+            } catch(error){
+                console.log('Erreur lors de la récupération des commentaires', error);
+            }
+        })()
+    },[])
 
     return (
         <div className='App'>
