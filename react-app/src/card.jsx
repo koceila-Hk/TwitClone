@@ -3,17 +3,14 @@ import './App.css'
 
  export default function Card() {
     const [img, setImg] = useState("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSEIW9c-rAXxxmLFlXMPtQUR3KNW4AOmQu8XA&s");
-    const [effect, setEffect] = useState([]);
+    const [like, setLike] = useState(0);
     const [comment, setComment] = useState([]);
     const inputRef = useRef(null);
     const inputImgRef = useRef(null);
 
-    const like = ()=>{
-        if(effect == 0){
-            setEffect(1)
-        }else{
-            setEffect(0)
-        }
+    //////// Handle Like submit
+    function handleLikeClic() {
+        setLike(pvLike=> pvLike === 0 ? 1: 0);
     }
 
     ////////Route pour insérer les commentaires
@@ -53,7 +50,7 @@ import './App.css'
                     }
                 })
                 const data = await response.json();
-                console.log('recu', data);
+                // console.log('recu', data);
                 setComment( data)
             } catch(error){
                 console.log('Erreur lors de la récupération des commentaires', error);
@@ -71,7 +68,9 @@ import './App.css'
             <div className='image'>
             <img src={img} alt="Card" />
             </div>
-            <button onClick={like}>{effect}</button>
+            <div>
+                <button onClick={handleLikeClic}>{like} Like</button>
+            </div>
             <div className="comment">
                 {comment.map((a, index) => (
                     <p style={{color:'red'}} key={index}>{a}</p>
