@@ -21,9 +21,9 @@ const App = () => {
           <Route path="blogs" element={<Blogs />} />
           <Route path="*" element={<NoPage />} />
         </Route>
+        <Route index element={<Login/>} />
         <Route path="/login" element={<Login/>} />
         <Route path="/signup" element={<SignUp/>} />
-        <Route index element={<SignUp/>} />
       </Routes>
     </BrowserRouter>
   );

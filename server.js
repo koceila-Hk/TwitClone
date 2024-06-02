@@ -1,11 +1,13 @@
 import express from 'express';
 import cors from 'cors';
+import bodyParser from 'body-parser';
 import {connectToDatabase, ObjectId} from './Model/mongoDB.js'
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
 const app = express();
 app.use(express.urlencoded({ extended: true }));
+app.use(bodyParser.json());
 const port = 3000;
 
 app.use(express.json());
@@ -38,7 +40,7 @@ app.post('/register', async (req, res) => {
       lastName,
       email,
       password: hachedPassword,
-      comments: []
+      created_at: new Date()
    };
 
     let db = await connectToDatabase();
@@ -103,18 +105,19 @@ app.get('/user',verifyToken, async(req, res) => {
 });
 
 
-//////// Route POST pour insérer les données commentaires
+//////// Route POST pour insérer les commentaires
 app.post('/comments',verifyToken, async (req, res) => {
-  const {comment} = req.body;
   try{
-    let db = await connectToDatabase();
-    const collection = db.collection('users');
-    const userIdObject = new ObjectId(req.userId);
-    const user = await collection.findOne({_id: userIdObject});
-    if(!user){
-      return res.status(404).json('user not found');
+    const {user_id, comment} = req.body;
+
+    const dataComment = {
+      user_id: new ObjectId(req.userId),
+      comment: comment,
+      created_at: new Date(),
     }
-    const addComment = await collection.updateOne({ _id: userIdObject}, {$push:{comments: comment, date: Date()}},)
+    let db = await connectToDatabase();
+    const collection = db.collection('comments');
+    const addComment = await collection.insertOne(dataComment)
    } catch(error) {
     console.log('Erreur comments', error);
     res.status(500).json('Erreur server')
@@ -127,38 +130,58 @@ app.post('/comments',verifyToken, async (req, res) => {
 app.get('/allcomments', async(req, res) => {
   try {
     let db = await connectToDatabase();
-    const collection = db.collection('users');
-  
-    const comments = await collection.find({},{projection:{comments:1, _id:0}}).toArray();
+    const collection = db.collection('comments');
+    
+    const comments = await collection.find({},{projection: {comment: 1, _id: 0}}).toArray();
     const allComments = comments.reduce((acc, user) => {
-      return acc.concat(user.comments);
+      return acc.concat(user.comment);
     },[]);
-    if (!comments){
-      return res.status(404).json('Comment nout found');
-    }
+
     res.status(200).json(allComments)
   } catch(error) {
     console.log('Erreur lors de la récupération des commentaires');
-    res.status(404).json('Erreur server')
+    res.status(500).json('Erreur server')
   }
-
 });
 
 
 ///////// Route Post pour insérer les likes
-app.post('/likes',async(req, res) => {
-  const {like} = req.body;
-  console.log(like);
+app.post('/likes',verifyToken,async(req, res) => {
+  const {user_id, like} = req.body;
+
+  const dataLike = {
+    user_id : new ObjectId(req.userId),
+    like: 1,
+    created_at: new Date()
+  }
   try {
     let db = await connectToDatabase();
-    const collection = db.collection('users');
-    const addLikes = await collection.insertOne({like});
-    console.log(addLikes);
+    const collection = db.collection('likes');
+    const addLikes = await collection.insertOne(dataLike);
+
+    res.status(200).json('I like')
   } catch(error) {
     console.log('Error insert likes', error);
   }
 });
 
+//////// Route Get pour récupérer all likes
+app.get('/allLikes', async (req, res) => {
+  try {
+    let db = await connectToDatabase();
+    const collection = db.collection('likes');
+
+    const likes = await collection.find({},{projection: {_id: 0, like:1}}).toArray();
+    const sumLikes = likes.reduce((acc, user) =>{
+      return acc + user.like;
+    },0)
+    console.log(sumLikes);
+    res.status(200).json(sumLikes);
+  } catch(error){
+    console.log('Erreur lors de la récupération des likes', error);
+    res.status(500).json('Erreur lors de la récupération des likes')
+  }
+});
 
 // bcrypt
 //   .genSalt(workFactor)

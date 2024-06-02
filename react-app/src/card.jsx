@@ -4,16 +4,61 @@ import './App.css'
  export default function Card() {
     const [img, setImg] = useState("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSEIW9c-rAXxxmLFlXMPtQUR3KNW4AOmQu8XA&s");
     const [like, setLike] = useState(0);
+    const [hasLiked, setHasLiked] = useState(false);
     const [comment, setComment] = useState([]);
     const inputRef = useRef(null);
     const inputImgRef = useRef(null);
 
-    //////// Handle Like submit
-    function handleLikeClic() {
-        setLike(pvLike=> pvLike === 0 ? 1: 0);
+
+    //////// Route Post pour insérer les likes
+    async function handleLikeSubmit(e) {
+        e.preventDefault();
+        if (!hasLiked) {
+            const nwLike = like + 1;
+            setLike(nwLike)
+            setHasLiked(true);
+        }
+        try {
+            const token = localStorage.getItem('token')
+            const response = await fetch('http://localhost:3000/likes',{
+                method: 'POST',
+                headers:{'Authorization':`Bearer ${token}`,
+                'Content-Type':'application/json'
+            },
+                body: JSON.stringify({like: nwLike})
+            })
+            const data = await response.json();
+            // console.log({'recu': data});
+        } catch(error){
+            console.log('Error insert like');
+        }
+    };
+
+    ////// Route Get pour récupérer les likes
+    useEffect(() => {
+        (async() => {
+            try {
+                const response = await fetch('http://localhost:3000/allLikes',{
+                    headers:{'Content-Type':'application/json'},
+                })
+                const data = await response.json();
+                console.log('allLikes',data);
+                setLike(data);
+            } catch(error){
+                console.log('Erreur lors de la récupérations des likes', error);
+            }
+        })();
+    },[]);
+
+    //////// Handle img submit
+    function handleImgSubmit(e) {
+        e.preventDefault();
+        const newImg = inputImgRef.current.value;
+        setImg(newImg)
     }
 
-    ////////Route pour insérer les commentaires
+
+    ////////Route POST pour insérer les commentaires
     async function handleCommentSubmit(e) {
         e.preventDefault();
         const newComment = inputRef.current.value.trim();
@@ -31,26 +76,16 @@ import './App.css'
         }
     };
 
-
-    function handleImgSubmit(e) {
-        e.preventDefault();
-        const newImg = inputImgRef.current.value;
-        setImg(newImg)
-    }
-
     ////////Route pour récupérer les commentaires
     useEffect(() => {
         (async() => {
             try{
-                const token = localStorage.getItem('token')
                 const response = await fetch('http://localhost:3000/allcomments',{
                     headers:{
-                        'Authorization': `Bearer ${token}`,
                         'Content-Type':'application/json'
                     }
                 })
                 const data = await response.json();
-                // console.log('recu', data);
                 setComment( data)
             } catch(error){
                 console.log('Erreur lors de la récupération des commentaires', error);
@@ -69,7 +104,9 @@ import './App.css'
             <img src={img} alt="Card" />
             </div>
             <div>
-                <button onClick={handleLikeClic}>{like} Like</button>
+                <form onSubmit={handleLikeSubmit}>
+                    <button type='submit'><span style={{padding:'5px'}}>{like}</span>like</button>
+                </form>
             </div>
             <div className="comment">
                 {comment.map((a, index) => (
