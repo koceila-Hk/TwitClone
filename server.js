@@ -31,15 +31,18 @@ function verifyToken(req, res, next) {
 /////// Route POST pour insérer des données
 app.post('/register', async (req, res) => {
   try {
-    const { firstName, lastName, email, password} = req.body;
+    const { username, email, password} = req.body;
 // Generate salt and hash
  const hachedPassword = await bcrypt.hash(password, 10);
 
     const data = {
-      firstName,
-      lastName,
+      username,
       email,
       password: hachedPassword,
+      profilePic: "",
+      bio: "",
+      followers: [],
+      following: [],
       created_at: new Date()
    };
 
@@ -88,6 +91,45 @@ app.post('/login', async (req, res) => {
 })
 
 
+//////// Route POST pour insérer les tweets
+app.post('/tweet',verifyToken, async (req, res) => {
+  try {
+    const {tweets} = req.body;
+  
+    const dataTweet = {
+      user_id: new ObjectId(req.userId),
+      tweets,
+      comment: [],
+      like: [],
+      created_at: new Date()
+    };
+    console.log(dataTweet);
+    let db = await connectToDatabase();
+    const collection = db.collection('tweets');
+    const addTweet = await collection.insertOne(dataTweet);
+    
+    res.status(200).json({tweetId :addTweet.insertedId});
+  } catch(error) {
+    console.log('Error add tweet', error);
+  }
+});
+
+
+//////// Route Get pour récupérer tous les tweets
+app.get('/allTweets', async (req, res) => {
+  try {
+    let db = await connectToDatabase();
+    const collection = db.collection('tweets');
+    const tweet = await collection.find({}).toArray();
+    console.log(tweet);
+
+    res.status(200).json(tweet)
+  } catch(error) {
+    console.log('Erreur lors de la récupération des tweets');
+    res.status(404).json('Erreur lors de la récupération des tweets');
+  }
+})
+
 //////// Route Get pour récupérer des données
 app.get('/user',verifyToken, async(req, res) => {
   try {
@@ -107,17 +149,26 @@ app.get('/user',verifyToken, async(req, res) => {
 
 //////// Route POST pour insérer les commentaires
 app.post('/comments',verifyToken, async (req, res) => {
+  const {comment, tweetId} = req.body;
+  console.log(comment);
+  console.log(tweetId);
   try{
-    const {user_id, comment} = req.body;
+
+    if(!comment){
+      return res.status(500).json();
+    }
 
     const dataComment = {
-      user_id: new ObjectId(req.userId),
+      userId: new ObjectId(req.userId),
       comment: comment,
-      created_at: new Date(),
+      created_at: new Date()
     }
+
     let db = await connectToDatabase();
-    const collection = db.collection('comments');
-    const addComment = await collection.insertOne(dataComment)
+    const collection = db.collection('tweets');
+    const addComment = await collection.updateOne({_id:new ObjectId(tweetId)}, {$push: {comment: dataComment}});
+
+    res.status(200).json('commentaire ajouté avec succés')
    } catch(error) {
     console.log('Erreur comments', error);
     res.status(500).json('Erreur server')
@@ -126,38 +177,20 @@ app.post('/comments',verifyToken, async (req, res) => {
 });
 
 
-/////// Route Get pour récupérer les commentaires
-app.get('/allcomments', async(req, res) => {
-  try {
-    let db = await connectToDatabase();
-    const collection = db.collection('comments');
-    
-    const comments = await collection.find({},{projection: {comment: 1, _id: 0}}).toArray();
-    const allComments = comments.reduce((acc, user) => {
-      return acc.concat(user.comment);
-    },[]);
-
-    res.status(200).json(allComments)
-  } catch(error) {
-    console.log('Erreur lors de la récupération des commentaires');
-    res.status(500).json('Erreur server')
-  }
-});
-
-
 ///////// Route Post pour insérer les likes
-app.post('/likes',verifyToken,async(req, res) => {
-  const {user_id, like} = req.body;
+app.post('/likes',verifyToken, async(req, res) => {
+  const {tweetId} = req.body;
+  const userId = new ObjectId(req.userId);
 
-  const dataLike = {
-    user_id : new ObjectId(req.userId),
-    like: 1,
-    created_at: new Date()
-  }
   try {
     let db = await connectToDatabase();
-    const collection = db.collection('likes');
-    const addLikes = await collection.insertOne(dataLike);
+    const collection = db.collection('tweets');
+
+    const addLikes = await collection.updateOne({_id: new ObjectId(tweetId), like :{$ne : userId}},{$push: {like: userId}});
+    // console.log(addLikes);
+    if (addLikes.matchedCount === 0){
+      return res.status(400).json('I liked this tweet')
+    }
 
     res.status(200).json('I like')
   } catch(error) {
@@ -165,23 +198,7 @@ app.post('/likes',verifyToken,async(req, res) => {
   }
 });
 
-//////// Route Get pour récupérer all likes
-app.get('/allLikes', async (req, res) => {
-  try {
-    let db = await connectToDatabase();
-    const collection = db.collection('likes');
 
-    const likes = await collection.find({},{projection: {_id: 0, like:1}}).toArray();
-    const sumLikes = likes.reduce((acc, user) =>{
-      return acc + user.like;
-    },0)
-    console.log(sumLikes);
-    res.status(200).json(sumLikes);
-  } catch(error){
-    console.log('Erreur lors de la récupération des likes', error);
-    res.status(500).json('Erreur lors de la récupération des likes')
-  }
-});
 
 // bcrypt
 //   .genSalt(workFactor)

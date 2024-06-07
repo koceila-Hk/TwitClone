@@ -13,8 +13,7 @@ const PasswordErrorMessage = () => {
   
 // Composant pour la page d'inscription
 const SignUp = () => {
-    const [firstName, setFirstName] = useState(""); 
-    const [lastName, setLastName] = useState(""); 
+    const [username, setUsername] = useState(""); 
     const [email, setEmail] = useState(""); 
     const [password, setPassword] = useState(""); 
     const [errorMessage, setEroorMessage] = useState('');
@@ -23,15 +22,14 @@ const SignUp = () => {
 
     const getIsFormValid = () => { 
       return ( 
-        firstName && lastName && validateEmail(email) && password.length >= 8); 
+        username && validateEmail(email) && password.length >= 8); 
     };
   
     const Submit = async (e) => { 
       e.preventDefault();
   
       let dataBody = {
-        firstName: firstName,
-        lastName: lastName,
+        username: username,
         email: email,
         password: password,
       };
@@ -55,26 +53,18 @@ const SignUp = () => {
   
     return (
       <div className="App">
-        <div className="form">
+        <div className="form-register">
         <form onSubmit={Submit}>
           <fieldset>
             <h2>Sign Up</h2>
             <div className="Field">
               <label>
-                First name <sup>*</sup>
+                User name<sup>*</sup>
               </label>
               <input 
-                value={firstName} 
-                onChange={(e) => setFirstName(e.target.value)} 
-                placeholder="First name" 
-              /> 
-            </div>
-            <div className="Field">
-              <label>Last name</label>
-              <input 
-                value={lastName} 
-                onChange={(e) => setLastName(e.target.value)} 
-                placeholder="Last name" 
+                value={username} 
+                onChange={(e) => setUsername(e.target.value)} 
+                placeholder="User name" 
               /> 
             </div>
             <div className="Field">

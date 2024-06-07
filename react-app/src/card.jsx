@@ -2,122 +2,147 @@ import React, { useState, useRef, useEffect} from 'react';
 import './App.css'
 
  export default function Card() {
-    const [img, setImg] = useState("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSEIW9c-rAXxxmLFlXMPtQUR3KNW4AOmQu8XA&s");
-    const [like, setLike] = useState(0);
-    const [hasLiked, setHasLiked] = useState(false);
-    const [comment, setComment] = useState([]);
-    const inputRef = useRef(null);
-    const inputImgRef = useRef(null);
+    const [tweets, setTweets] = useState([]);
+    const [tweetId, setTweetId] = useState(null);
+    const [comment, setComment] = useState({});
+    const inputTweetRef = useRef(null);
 
-
-    //////// Route Post pour insérer les likes
-    async function handleLikeSubmit(e) {
-        e.preventDefault();
-        if (!hasLiked) {
-            const nwLike = like + 1;
-            setLike(nwLike)
-            setHasLiked(true);
-        }
-        try {
-            const token = localStorage.getItem('token')
-            const response = await fetch('http://localhost:3000/likes',{
-                method: 'POST',
-                headers:{'Authorization':`Bearer ${token}`,
-                'Content-Type':'application/json'
-            },
-                body: JSON.stringify({like: nwLike})
-            })
-            const data = await response.json();
-            // console.log({'recu': data});
-        } catch(error){
-            console.log('Error insert like');
-        }
-    };
-
-    ////// Route Get pour récupérer les likes
-    useEffect(() => {
-        (async() => {
-            try {
-                const response = await fetch('http://localhost:3000/allLikes',{
-                    headers:{'Content-Type':'application/json'},
-                })
-                const data = await response.json();
-                console.log('allLikes',data);
-                setLike(data);
-            } catch(error){
-                console.log('Erreur lors de la récupérations des likes', error);
-            }
-        })();
-    },[]);
-
-    //////// Handle img submit
-    function handleImgSubmit(e) {
-        e.preventDefault();
-        const newImg = inputImgRef.current.value;
-        setImg(newImg)
+ //////// Route Post pour insérer les tweets
+ async function handleTweetSubmit(e) {
+    e.preventDefault();
+    const nwTweet = inputTweetRef.current.value.trim();
+    if (!nwTweet) return;  // Check if tweet is empty
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:3000/tweet', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ tweets: nwTweet })
+      });
+      const data = await response.json();   
+      setTweetId(data.tweetId);
+      setTweets((prevTweets) => [...prevTweets, {_id:data.tweetId, tweets: nwTweet, like: [], comment:[]},]);
+      inputTweetRef.current.value = '';
+    } catch (error) {
+      console.log('Error inserting tweet', error);
     }
+  };
 
+  ////////// Route pour récupérer les tweets 
+  useEffect(() => {
+    (async () => {
+      try {
+        const response = await fetch('http://localhost:3000/allTweets', {
+          headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await response.json();
+        setTweets(data);
+      } catch (error) {
+        console.log('Erreur lors de la récupération des tweets', error);
+      }
+    })();
+  }, []); 
 
-    ////////Route POST pour insérer les commentaires
-    async function handleCommentSubmit(e) {
-        e.preventDefault();
-        const newComment = inputRef.current.value.trim();
-        setComment(arrayComment => [...arrayComment, newComment]);
-        inputRef.current.value = "";
-        try {
-            const token = localStorage.getItem('token')
-            const res = await fetch('http://localhost:3000/comments',{
-                method: 'POST',
-                headers: {'Content-Type':'application/json', 'Authorization':`Bearer ${token}`},
-                body: JSON.stringify({comment: newComment})
-            });
-        } catch(error){
-            console.log('Erreur', error);
-        }
-    };
+  //////// Route Post pour insérer les likes
+  async function handleLikeSubmit(e, tweetId) {
+    e.preventDefault();
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:3000/likes', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ tweetId })
+      });
+      const data = await response.json();
+      setTweets(prevTweets => prevTweets.map(tweet => 
+        tweet._id === tweetId ? { ...tweet, like: [...tweet.like, data.userId] } : tweet
+      ));
+    } catch (error) {
+      console.log('Error inserting like', error);
+    }
+  };
 
-    ////////Route pour récupérer les commentaires
-    useEffect(() => {
-        (async() => {
-            try{
-                const response = await fetch('http://localhost:3000/allcomments',{
-                    headers:{
-                        'Content-Type':'application/json'
-                    }
-                })
-                const data = await response.json();
-                setComment( data)
-            } catch(error){
-                console.log('Erreur lors de la récupération des commentaires', error);
-            }
-        })()
-    },[])
+  //////// Handle img submit
+//   function handleImgSubmit(e) {
+//     e.preventDefault();
+//     const newImg = inputImgRef.current.value;
+//     setImg(newImg);
+//   }
 
-    return (
-        <div className='App'>
-            <div className='form'>
-            <form onSubmit={handleImgSubmit}>
-                <input type="url" ref={inputImgRef} placeholder='URL image'/>
-                <button type='submit'>Add image</button>
-            </form>
-            <div className='image'>
-            <img src={img} alt="Card" />
+  const handleCommentChange = (tweetId, value) => {
+    setComment(prevComments => ({ ...prevComments, [tweetId]: value }));
+  };
+  //////// Route POST pour insérer les commentaires
+  async function handleCommentSubmit(e, tweetId) {
+    e.preventDefault();
+    const newComment = comment[tweetId]?.trim();
+    // console.log(newComment);  
+    if (!newComment) return;
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('http://localhost:3000/comments', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ comment: newComment, tweetId })
+        });
+        const data = await res.json();
+        setTweets(prevTweets => prevTweets.map(tweet =>
+            tweet._id === tweetId ? { ...tweet, comment: [...tweet.comment, newComment] } : tweet
+        ));
+
+        setComment(prevComments => ({ ...prevComments, [tweetId]: '' }));
+      } catch (error) {
+        console.log('Erreur', error);
+    }
+};
+
+  return (
+    <div className='App'>
+      <div className='form'>
+        <div className='form-tweet'>
+          <form className='form-tweet' onSubmit={handleTweetSubmit}>
+            <input type="text" ref={inputTweetRef} placeholder='What is happening?' />
+            <button type='submit'>Tweet</button>
+          </form>
+        </div>
+
+      <div className='tweets'>
+        {tweets.map((tweet) => (
+          <div key={tweet._id} className='tweet'>
+            <div className='tweetTime'>
+              <span>{tweet.created_at}</span>
             </div>
-            <div>
-                <form onSubmit={handleLikeSubmit}>
-                    <button type='submit'><span style={{padding:'5px'}}>{like}</span>like</button>
-                </form>
-            </div>
-            <div className="comment">
-                {comment.map((a, index) => (
-                    <p style={{color:'red'}} key={index}>{a}</p>
+            <div className='tweetContent'>
+              <h1>{tweet.tweets}</h1>
+              <div className='tweetLikes'>
+                <button onClick={(e) => handleLikeSubmit(e, tweet._id)}> 
+                <span style={{padding:'5px'}}> {tweet.like.length}</span> Like</button>
+              </div>
+                  <form onSubmit={(e) => handleCommentSubmit(e, tweet._id)}>
+                      <input type="text" value={comment[tweetId]} onChange={(e) => handleCommentChange(tweet._id, e.target.value)}
+                       placeholder="Add a comment" />
+                      <button type='submit'>Add</button>
+                  </form>
+              <div className='tweetComments'>
+                {tweet.comment.map((comment, index) => (
+                  <p key={index} style={{ color: 'green' }}>{comment.comment}</p>
                 ))}
+              </div>
             </div>
-            <form onSubmit={handleCommentSubmit}>
-                <input type="text" ref={inputRef} placeholder="Add a comment" />
-                <button type='submit'>Add</button>
-            </form>
-        </div>
-        </div>
-    );
+          </div>
+        ))}
+      </div>
+      </div>
+    </div>
+  );
 }
+

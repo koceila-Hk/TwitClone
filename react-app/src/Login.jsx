@@ -40,7 +40,7 @@ const Login = () => {
   
     return (
       <div className='App'>
-      <div className="form">
+      <div className="form-login">
         <form onSubmit={Submit}>
           <fieldset>
             <h2>Login</h2>

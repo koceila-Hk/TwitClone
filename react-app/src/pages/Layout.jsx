@@ -25,10 +25,10 @@ const Layout = () => {
       <main>
         <Outlet />
       </main>
-
+{/* 
       <footer>
         <p>Footer</p>
-      </footer>
+      </footer> */}
     </div>
   );
 };

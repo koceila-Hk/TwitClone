@@ -7,17 +7,17 @@
 
 body {
   font-family: 'Arial', sans-serif;
-  background-color: #f0f2f5;
+  background-color: #000000;
   height: 100vh;
 }
 
 .App {
   display: flex;
   justify-content: center;
-  padding-top: 5%;
 }
 
-.form {
+.form-login,
+.form-register {
   background-color: #ffffff;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   border-radius: 8px;
@@ -120,16 +120,33 @@ a {
   cursor: pointer;
 }
 
-.Home {
-  padding-top: 30px;
-  height: 100vh;
+
+.form {
+  background-color: #ffffff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  padding: 20px;
+  max-width: 600px;
+  width: 100%;
 }
 
-/*/////// CARDS //////////*/
-.image {
-  display: flex;
-  justify-content: center;
+.tweets {
+  padding-top: 15%;
 }
+
+/* .form-tweet {
+  width: 100%;
+} */
+.tweet {
+  padding: 10px;
+}
+
+input {
+  padding: 20px;
+  width: 60%;
+  align-items: center;
+}
+
 
 
 /*//////// FOOTER //////*/
