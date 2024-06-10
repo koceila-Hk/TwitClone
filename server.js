@@ -95,22 +95,32 @@ app.post('/login', async (req, res) => {
 app.post('/tweet',verifyToken, async (req, res) => {
   try {
     const {tweets} = req.body;
+    const createdAt = new Date().toLocaleString('fr-FR', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   
     const dataTweet = {
       user_id: new ObjectId(req.userId),
       tweets,
       comment: [],
       like: [],
-      created_at: new Date()
+      created_at: createdAt
     };
+
     console.log(dataTweet);
     let db = await connectToDatabase();
     const collection = db.collection('tweets');
     const addTweet = await collection.insertOne(dataTweet);
     
-    res.status(200).json({tweetId :addTweet.insertedId});
+    res.status(200).json({tweetId: addTweet.insertedId, created_at: createdAt});
   } catch(error) {
-    console.log('Error add tweet', error);
+    console.log('Error adding tweet', error);
+    res.status(500).json('Error adding tweet')
   }
 });
 
@@ -161,14 +171,22 @@ app.post('/comments',verifyToken, async (req, res) => {
     const dataComment = {
       userId: new ObjectId(req.userId),
       comment: comment,
-      created_at: new Date()
-    }
+      created_at: new Date().toLocaleString('fr-FR', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      })
 
+    }
+    // console.log(dataComment);
     let db = await connectToDatabase();
     const collection = db.collection('tweets');
     const addComment = await collection.updateOne({_id:new ObjectId(tweetId)}, {$push: {comment: dataComment}});
 
-    res.status(200).json('commentaire ajouté avec succés')
+    res.status(200).json({comment: dataComment})
    } catch(error) {
     console.log('Erreur comments', error);
     res.status(500).json('Erreur server')
