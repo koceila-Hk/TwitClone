@@ -10,13 +10,10 @@ import Login from './Login';
 
 // Composant principal pour gérer l'affichage des pages
 const App = () => {
-  const [isLoginPage, setIsLoginPage] = useState(false);
-
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Layout />}>
-          {/* <Route index element={<Home />} /> */}
           <Route path="/home" element={<Home />} />
           <Route path="blogs" element={<Blogs />} />
           <Route path="*" element={<NoPage />} />

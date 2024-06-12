@@ -4,6 +4,7 @@ import bodyParser from 'body-parser';
 import {connectToDatabase, ObjectId} from './Model/mongoDB.js'
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import multer from 'multer';
 
 const app = express();
 app.use(express.urlencoded({ extended: true }));
@@ -13,6 +14,16 @@ const port = 3000;
 app.use(express.json());
 app.use(cors());
 
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'images/')
+  },
+  // filename: (req, file, cb) => {
+  //   cb(null, file.originalname)
+  // },
+});
+
+const upload = multer({ storage: storage });
 
 //////// Function verifyToken
 function verifyToken(req, res, next) {
@@ -26,6 +37,17 @@ function verifyToken(req, res, next) {
    res.status(401).json({ error: 'Invalid token' });
    }
    };
+
+//////// Route POST pour insérer les images 
+app.post('/image', verifyToken, upload.single('file'), (req, res) => {
+  const file = req.file;
+  console.log(file);
+  if (!file) {
+    return res.status(400).json({ message: 'No file uploaded' });
+  }
+  res.status(200).json({ message: 'File uploaded successfully', file });
+});
+
 
 
 /////// Route POST pour insérer des données
