@@ -14,16 +14,9 @@ const port = 3000;
 app.use(express.json());
 app.use(cors());
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'images/')
-  },
-  // filename: (req, file, cb) => {
-  //   cb(null, file.originalname)
-  // },
-});
+//////// Le dossier ou les fichiers static seront servis 
+app.use('/images',express.static('images'));
 
-const upload = multer({ storage: storage });
 
 //////// Function verifyToken
 function verifyToken(req, res, next) {
@@ -37,17 +30,6 @@ function verifyToken(req, res, next) {
    res.status(401).json({ error: 'Invalid token' });
    }
    };
-
-//////// Route POST pour insérer les images 
-app.post('/image', verifyToken, upload.single('file'), (req, res) => {
-  const file = req.file;
-  console.log(file);
-  if (!file) {
-    return res.status(400).json({ message: 'No file uploaded' });
-  }
-  res.status(200).json({ message: 'File uploaded successfully', file });
-});
-
 
 
 /////// Route POST pour insérer des données
@@ -112,11 +94,24 @@ app.post('/login', async (req, res) => {
     }
 })
 
+////////// Configuration multer
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'images/')
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + '-' + file.originalname);
+  }
+});
+  
+const upload = multer({ storage: storage });
 
 //////// Route POST pour insérer les tweets
-app.post('/tweet',verifyToken, async (req, res) => {
+app.post('/tweet',verifyToken, upload.single('file'),async (req, res) => {
   try {
     const {tweets} = req.body;
+    const file = req.file;
+
     const createdAt = new Date().toLocaleString('fr-FR', {
       weekday: 'long',
       year: 'numeric',
@@ -129,21 +124,29 @@ app.post('/tweet',verifyToken, async (req, res) => {
     const dataTweet = {
       user_id: new ObjectId(req.userId),
       tweets,
+      imageUrl: file ? file.filename : null,
       comment: [],
       like: [],
       created_at: createdAt
     };
+    // console.log(dataTweet);
 
-    console.log(dataTweet);
     let db = await connectToDatabase();
     const collection = db.collection('tweets');
     const addTweet = await collection.insertOne(dataTweet);
     
-    res.status(200).json({tweetId: addTweet.insertedId, created_at: createdAt});
+    res.status(200).json({tweetId: addTweet.insertedId, created_at: createdAt, imageUrl: dataTweet.imageUrl});
   } catch(error) {
     console.log('Error adding tweet', error);
     res.status(500).json('Error adding tweet')
   }
+});
+
+
+///////// Route Get images
+app.get('/images/:filename', (req, res) => {
+  const { filename } = req.params;
+  res.sendFile(filename);
 });
 
 
@@ -226,18 +229,21 @@ app.post('/likes',verifyToken, async(req, res) => {
     let db = await connectToDatabase();
     const collection = db.collection('tweets');
 
-    const addLikes = await collection.updateOne({_id: new ObjectId(tweetId), like :{$ne : userId}},{$push: {like: userId}});
-    // console.log(addLikes);
-    if (addLikes.matchedCount === 0){
-      return res.status(400).json('I liked this tweet')
+    const addLike = await collection.updateOne({_id: new ObjectId(tweetId), like :{$ne : userId}},{$push: {like: userId}});
+    // console.log(addLike);
+
+    if (addLike.matchedCount === 1){
+      return res.status(200).json('Like added');
+      } else {
+      const removeLike = await collection.updateOne({_id: new ObjectId(tweetId), like: {$eq: userId}}, {$pull: {like: userId}})
+      return res.status(200).json('Like removed');
     }
 
-    res.status(200).json('I like')
-  } catch(error) {
-    console.log('Error insert likes', error);
+    } catch(error) {
+      console.log('Error insert likes', error);
+      res.status(404).json('Error insert likes');
   }
 });
-
 
 
 // bcrypt

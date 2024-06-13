@@ -6,14 +6,17 @@ import './App.css'
     const [tweetId, setTweetId] = useState(null);
     const [comment, setComment] = useState({});
     const [file, setFile] = useState(null);
-    // const [image, setImage] = useState({ preview: '', data: '' });
     const inputTweetRef = useRef(null);
+
 
  //////// Route Post pour insérer les tweets
  async function handleTweetSubmit(e) {
     e.preventDefault();
     const nwTweet = inputTweetRef.current.value.trim();
-    if (!nwTweet) return;  // Check if tweet is empty
+
+    const formData = new FormData();
+    formData.append('tweets', nwTweet);
+    formData.append('file', file);
     try {
       const token = localStorage.getItem('token');
       const response = await fetch('http://localhost:3000/tweet', {
@@ -21,18 +24,23 @@ import './App.css'
         headers: {
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ tweets: nwTweet })
+        body: formData
       });
       const data = await response.json(); 
-      // console.log(data);
+      // console.log(data.imageUrl);
 
       setTweetId(data.tweetId);
-      setTweets((prevTweets) => [...prevTweets, {_id:data.tweetId, tweets: nwTweet, like: [], comment:[], created_at: data.created_at}]);
+      setTweets((prevTweets) => [...prevTweets, {_id:data.tweetId, tweets: nwTweet, like: [], comment:[], created_at: data.created_at, imageUrl: data.imageUrl}]);
       inputTweetRef.current.value = '';
+      setFile(null);
     } catch (error) {
       console.log('Error inserting tweet', error);
     }
   };
+
+  function handleImgChange(e) {
+    setFile(e.target.files[0]);
+  }
 
   ////////// Route pour récupérer les tweets 
   useEffect(() => {
@@ -49,6 +57,7 @@ import './App.css'
     })();
   }, []); 
 
+
   //////// Route Post pour insérer les likes
   async function handleLikeSubmit(e, tweetId) {
     e.preventDefault();
@@ -63,20 +72,22 @@ import './App.css'
         body: JSON.stringify({ tweetId })
       });
       const data = await response.json();
-      setTweets(prevTweets => prevTweets.map(tweet => 
-        tweet._id === tweetId ? { ...tweet, like: [...tweet.like, data.userId] } : tweet
-      ));
+      // console.log(data);
+
+      const userId = atob(token.split('.')[1]).id;
+      if (data === 'Like added') {
+        setTweets(prevTweets => prevTweets.map(tweet => 
+          tweet._id === tweetId ? { ...tweet, like: [...tweet.like, data.userId] } : tweet
+        ));
+      } else if (data === 'Like removed'){
+        setTweets(prevTweets => prevTweets.map(tweet =>
+          tweet._id === tweetId ? { ...tweet, like: tweet.like.filter(like => like !== userId) } : tweet
+        ));
+      }
     } catch (error) {
       console.log('Error inserting like', error);
     }
   };
-
-  //////// Handle img submit
-//   function handleImgSubmit(e) {
-//     e.preventDefault();
-//     const newImg = inputImgRef.current.value;
-//     setImg(newImg);
-//   }
 
   const handleCommentChange = (tweetId, value) => {
     setComment(prevComments => ({ ...prevComments, [tweetId]: value }));
@@ -109,49 +120,15 @@ import './App.css'
     }
 };
 
-
-//////// Route POST pour insérer les images
-const handleImgSubmit = async (e) => {
-  e.preventDefault();
-  const formData = new FormData();
-  formData.append('file', file);
-  try {
-    const token = localStorage.getItem('token');
-    const response = await fetch('http://localhost:3000/image', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`
-      },
-      body: formData,
-    });
-    const data = await response.json();
-    console.log(data);
-  } catch (error) {
-    console.log('Erreur img', error);
-  }
-}
-
-
-function handleImgChange(e) {
-  setFile(e.target.files[0]);
-}
-
   return (
     <div className='App'>
       <div className='form'>
         <div className='form-tweet'>
           <form className='form-tweet' onSubmit={handleTweetSubmit}>
             <input type="text" ref={inputTweetRef} placeholder='What is happening?' />
+            <input type="file" onChange={handleImgChange}/>
             <button type='submit'>Tweet</button>
-          </form>
-        </div>
-
-        <div className='form-img'>
-        <form onSubmit={handleImgSubmit}>
-          <h1>React File Upload</h1>
-          <input type="file" onChange={handleImgChange}/>
-          <button type="submit">Upload</button>
-          {file && <img src={URL.createObjectURL(file)} alt="" />}
+            {file && <img src={URL.createObjectURL(file)} alt="" />}
           </form>
         </div>
 
@@ -163,6 +140,11 @@ function handleImgChange(e) {
             </div>
             <div className='tweetContent'>
               <h1>{tweet.tweets}</h1>
+                {tweet.imageUrl && (
+                  <div className='tweetImg'>
+                    <img src={`http://localhost:3000/images/${tweet.imageUrl}`} alt="Tweet Image" />
+                  </div>
+                )}
               <div className='tweetLikes'>
                 <button onClick={(e) => handleLikeSubmit(e, tweet._id)}> 
                 <span style={{padding:'5px'}}> {tweet.like.length}</span> Like</button>
