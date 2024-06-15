@@ -120,6 +120,23 @@ import './App.css'
     }
 };
 
+////////// Route Delete tweet
+async function handleTweetDelete(e, tweetId) {
+  e.preventDefault();
+  try {
+    const token = localStorage.getItem('token');
+    const response = await fetch('http://localhost:3000/delete',{
+      method: 'DELETE',
+      headers: { 'Authorization':`Bearer ${token}`,
+        'Content-Type':'application/json'},
+      body: JSON.stringify({tweetId})
+    })
+    const data = await response.json();
+  } catch(error) {
+    console.log('Error delete tweet');
+  }
+}
+
   return (
     <div className='App'>
       <div className='form'>
@@ -135,6 +152,8 @@ import './App.css'
       <div className='tweets'>
         {tweets.map((tweet) => (
           <div key={tweet._id} className='tweet'>
+            <button 
+            onClick={(e) => handleTweetDelete(e, tweet._id)}>Delete</button>
             <div className='tweetTime'>
               <span>{tweet.created_at}</span>
             </div>

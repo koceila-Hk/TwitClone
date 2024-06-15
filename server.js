@@ -32,7 +32,7 @@ function verifyToken(req, res, next) {
    };
 
 
-/////// Route POST pour insérer des données
+/////// Route POST pour insérer des données de user
 app.post('/register', async (req, res) => {
   try {
     const { username, email, password} = req.body;
@@ -156,7 +156,7 @@ app.get('/allTweets', async (req, res) => {
     let db = await connectToDatabase();
     const collection = db.collection('tweets');
     const tweet = await collection.find({}).toArray();
-    console.log(tweet);
+    // console.log(tweet);
 
     res.status(200).json(tweet)
   } catch(error) {
@@ -245,6 +245,21 @@ app.post('/likes',verifyToken, async(req, res) => {
   }
 });
 
+
+//////// Route Delete tweet
+app.delete('/delete', verifyToken, async (req, res) => {
+  const tweetId = new ObjectId(req.body.tweetId);
+  // console.log(tweetId);
+  try {
+    let db = await connectToDatabase();
+    const collection = db.collection('tweets');
+
+    const deleteTweet = await collection.deleteOne({_id: tweetId});
+    console.log(deleteTweet);
+  } catch(error) {
+    console.log('Error delete from db');
+  }
+})
 
 // bcrypt
 //   .genSalt(workFactor)
