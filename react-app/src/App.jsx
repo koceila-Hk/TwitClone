@@ -5,8 +5,9 @@ import Layout from './pages/Layout';
 import NoPage from './pages/NoPage';
 import Home from './pages/Home';
 import Blogs from './pages/Blog';
-import SignUp from './SignUp';
-import Login from './Login';
+import SignUp from './Auth/SignUp';
+import Login from './Auth/Login';
+import Logout from './Auth/Logout'
 
 // Composant principal pour gérer l'affichage des pages
 const App = () => {
@@ -21,6 +22,7 @@ const App = () => {
         <Route index element={<Login/>} />
         <Route path="/login" element={<Login/>} />
         <Route path="/signup" element={<SignUp/>} />
+        <Route path='/logout' element={<Logout/>}/>
       </Routes>
     </BrowserRouter>
   );

@@ -1,5 +1,5 @@
 import React, {useState} from "react";
-import validateEmail from "./utils";
+import validateEmail from "../utils";
 import { useNavigate } from "react-router-dom";
 
 

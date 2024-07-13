@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from "react-router-dom";
-import UserNotFound from './NotFound';
+import UserNotFound from '../NotFound';
 import { Ring } from 'react-css-spinners'
 
 

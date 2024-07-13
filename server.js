@@ -3,33 +3,15 @@ import cors from 'cors';
 import bodyParser from 'body-parser';
 import {connectToDatabase, ObjectId} from './Model/mongoDB.js'
 import bcrypt from 'bcrypt';
+import { verifyToken } from './Middlewares/Auth.js';
 import jwt from 'jsonwebtoken';
 import multer from 'multer';
 
 const app = express();
-app.use(express.urlencoded({ extended: true }));
-app.use(bodyParser.json());
-const port = 3000;
-
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(cors());
-
-//////// Le dossier ou les fichiers static seront servis 
-app.use('/images',express.static('images'));
-
-
-//////// Function verifyToken
-function verifyToken(req, res, next) {
-  const token = req.header('Authorization')?.split(' ')[1];
-    if (!token) return res.status(401).json({ error: 'Access denied' });
-  try {
-   const decoded = jwt.verify(token, 'your-secret-key');
-   req.userId = decoded.userId;
-   next();
-   } catch (error) {
-   res.status(401).json({ error: 'Invalid token' });
-   }
-   };
+const port = 3000;
 
 
 /////// Route POST pour insérer des données de user
@@ -47,6 +29,7 @@ app.post('/register', async (req, res) => {
       bio: "",
       followers: [],
       following: [],
+      tokens:[],
       created_at: new Date()
    };
 
@@ -66,33 +49,79 @@ app.post('/register', async (req, res) => {
   }
 });
 
-
 //////// Route pour se connecter
 app.post('/login', async (req, res) => {
     try {
         const {email, password} = req.body;
+
         let db = await connectToDatabase();
         const collection = db.collection('users');
         const user = await collection.findOne({email: email});
         if (!user) {
           return res.status(500).json('User not found')
         }
-
+        
         const passwordMatch = await bcrypt.compare(password, user.password);
-
         if (!passwordMatch) {
           return res.status(401).json('Invalid password');
         }      
-
+        
         const token = jwt.sign({ userId: user._id }, 'your-secret-key', {
-        expiresIn: '2h',
+          expiresIn: '1h',
         });
         // console.log('Generated Token:', token);
+
+        let oldTokens = user.tokens || [];
+
+        if(oldTokens.length) {
+          oldTokens = oldTokens.filter(t => {
+            const timeDiff = (Date.now() - parseInt(t.signedAt)) / 1000
+            if (timeDiff < 3600){
+              return t;
+            }
+          });
+        }
+
+        await collection.updateOne({_id: user._id}, {$set: {
+          tokens: [...oldTokens, { token, signedAt: Date.now().toString() }]}})
+
         res.status(200).json({ token });
-    } catch(error) {
-        console.error('Erreur', error);
+      } catch(error) {
+        console.error('Error login', error);
     }
 })
+
+/////// Logout page 
+app.post("/logout",verifyToken, async (req, res) => {
+  try {
+    if(req.headers && req.headers.authorization) {
+      const token = req.headers.authorization.split(' ')[1];
+      if(!token) {
+        return res.status(401).json({message: 'Authorization fail !'})
+      }
+  
+      let db = await connectToDatabase();
+      const collection = db.collection('users');
+  
+      const user = await collection.findOne({_id: new ObjectId(req.userId)});
+      if(!user) {
+        return res.status(401).json({message: 'User not found'})
+      }
+  
+      const newTokens = user.tokens.filter(t => t.token !== token);
+  
+      await collection.updateOne({ _id: new ObjectId(req.userId)}, { $set: { tokens: newTokens } });
+    }
+    res.status(200).json({message: 'logged out successfully'});
+
+  }catch(error) {
+    console.error('Error logout', error);
+  }
+});
+
+
+//////// Le dossier ou les fichiers static seront servis 
+app.use('/images',express.static('images'));
 
 ////////// Configuration multer
 const storage = multer.diskStorage({
@@ -247,7 +276,7 @@ app.post('/likes',verifyToken, async(req, res) => {
 
 
 //////// Route Delete tweet
-app.delete('/delete', verifyToken, async (req, res) => {
+app.delete('/tweet', verifyToken, async (req, res) => {
   const tweetId = new ObjectId(req.body.tweetId);
   // console.log(tweetId);
   try {
@@ -256,8 +285,14 @@ app.delete('/delete', verifyToken, async (req, res) => {
 
     const deleteTweet = await collection.deleteOne({_id: tweetId});
     console.log(deleteTweet);
+    if(deleteTweet.deletedCount === 1){
+      res.status(200).json('Tweet deleted successefully');
+    } else {
+      res.status(404).json('Tweet not found')
+    }
   } catch(error) {
     console.log('Error delete from db');
+    res.status(500).json('Error delete tweet from')
   }
 })
 
@@ -274,6 +309,6 @@ app.delete('/delete', verifyToken, async (req, res) => {
 
 connectToDatabase().then(() => {
 app.listen(port, () => {
-console.log(`Le serveur est en écoute sur le port ${port}`);
+console.log(`I'm here kouss ${port}`);
 });
 })

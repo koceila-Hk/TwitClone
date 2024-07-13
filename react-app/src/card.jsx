@@ -92,6 +92,7 @@ import './App.css'
   const handleCommentChange = (tweetId, value) => {
     setComment(prevComments => ({ ...prevComments, [tweetId]: value }));
   };
+  
   //////// Route POST pour insérer les commentaires
   async function handleCommentSubmit(e, tweetId) {
     e.preventDefault();
@@ -125,13 +126,16 @@ async function handleTweetDelete(e, tweetId) {
   e.preventDefault();
   try {
     const token = localStorage.getItem('token');
-    const response = await fetch('http://localhost:3000/delete',{
+    const response = await fetch('http://localhost:3000/tweet',{
       method: 'DELETE',
       headers: { 'Authorization':`Bearer ${token}`,
         'Content-Type':'application/json'},
       body: JSON.stringify({tweetId})
     })
-    const data = await response.json();
+    // console.log(response);
+    if(response.ok){
+      setTweets(prevTweets => prevTweets.filter(tweet => tweet._id !== tweetId))
+    }
   } catch(error) {
     console.log('Error delete tweet');
   }
