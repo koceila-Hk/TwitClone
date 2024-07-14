@@ -19,7 +19,7 @@ import './App.css'
     formData.append('file', file);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:3000/tweet', {
+      const response = await fetch('http://localhost:3000/tweets/tweet', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -46,7 +46,7 @@ import './App.css'
   useEffect(() => {
     (async () => {
       try {
-        const response = await fetch('http://localhost:3000/allTweets', {
+        const response = await fetch('http://localhost:3000/tweets/allTweets', {
           headers: { 'Content-Type': 'application/json' }
         });
         const data = await response.json();
@@ -63,7 +63,7 @@ import './App.css'
     e.preventDefault();
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:3000/likes', {
+      const response = await fetch('http://localhost:3000/tweets/likes', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -101,7 +101,7 @@ import './App.css'
     if (!newComment) return;
     try {
         const token = localStorage.getItem('token');
-        const res = await fetch('http://localhost:3000/comments', {
+        const res = await fetch('http://localhost:3000/tweets/comments', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -126,7 +126,7 @@ async function handleTweetDelete(e, tweetId) {
   e.preventDefault();
   try {
     const token = localStorage.getItem('token');
-    const response = await fetch('http://localhost:3000/tweet',{
+    const response = await fetch('http://localhost:3000/tweets/tweet',{
       method: 'DELETE',
       headers: { 'Authorization':`Bearer ${token}`,
         'Content-Type':'application/json'},

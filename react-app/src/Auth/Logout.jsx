@@ -8,7 +8,7 @@ const Logout = () => {
     const handleLogout = async () => {
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch('http://localhost:3000/logout', {
+            const response = await fetch('http://localhost:3000/auth/sign-out', {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}`},
             });
