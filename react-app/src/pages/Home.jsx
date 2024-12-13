@@ -58,7 +58,7 @@ const Home = () => {
         body: JSON.stringify({ tweetId })
       });
       const data = await response.json();
-      // console.log(data);
+      console.log(data);
 
       const userId = atob(token.split('.')[1]).id;
       if (data === 'Like added') {
